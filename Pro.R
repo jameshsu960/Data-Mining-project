@@ -1,6 +1,12 @@
 install.packages("matrixStats")
+install.packages("fitdistrplus")
+install.packages("nnet")
+
 
 library(matrixStats)
+library(fitdistrplus)
+library(nnet)
+
 rm(list=ls())
 
 MyData <- read.csv(file="kag_risk_factors_cervical_cancer 4.csv", header=TRUE)
@@ -114,7 +120,64 @@ any(is.na(mat))
 data <- as.data.frame(mat)
 
 data$CancerRisk = data$Hinselmann + data$Schiller + data$Citology + data$Biopsy
-data$CancerRisk = factor(data$CancerRisk, levels=c("0","1","2","3","4"))
+data$Risk[data$CancerRisk < 1] <- 0   ##### "No risk"
+data$Risk[data$CancerRisk >=1  & data$CancerRisk<= 2] <- 1  #####"medium risk"
+data$Risk[data$CancerRisk >= 3 & data$CancerRisk<= 4] <- 2  ##### "high risk"
+
+
+
+
+
+
+
+#data$CancerRisk = factor(data$CancerRisk, levels=c("0","1","2","3","4"))
+
+#### removing the colums 
+dat <- data[ -c(33,34,35,36,37) ]
+#### to write updated data set to new csv
+write.csv(dat, "Updated_file.csv")
+
+#### round is rounding the output of prop.table to 2 digits
+round(prop.table(table(dat$Risk)),2)
+
+
+
+
+
+hist(dat$Risk, col = 2)
+
+###########################################
+
+##### check if the data is balanced
+
+descdist(dat$Risk, discrete = FALSE)
+
+normal_dist <- fitdist(dat$Risk, "norm")
+plot(normal_dist) 
+
+###Standardize the data
+# head(dat)
+# class(dat)
+# Standandardize_train <- scale(dat[,-33])
+# 
+# var(dat[,2])
+# var(dat[,3])
+# 
+# var(Standandardize_train[,2])
+# var(Standandardize_train[,3])
+# 
+# var(dat[,10])
+# var(Standandardize_train[,10])
+
+# train <- sample(1:nrow(dat), nrow(dat)*.80)
+# df_train <- dat[train, ]
+# df_test <- dat[-train, ]
+# 
+# msat <- multinom(CancerRisk ~ ., data=df_train)
+
+
+
+
 
 
 
