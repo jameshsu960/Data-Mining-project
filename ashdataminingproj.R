@@ -207,29 +207,29 @@ balanced<- data
 C.perc = list(high = 19, med = 12 ) 
 mybalanced <- RandOverClassif(Risk~., balanced, C.perc)
 table(mybalanced$Risk)
-
-#BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
-C.perc = list(high = 7, med = 5 ) 
-myunbalanced <- RandOverClassif(Risk~., balanced, C.perc)
-table(myunbalanced$Risk)
-
-#BALANCED INVERTED OVERSAMPLE
-myinverted <- RandOverClassif(Risk~., data, "extreme")
-table(myinverted$Risk)
+# 
+# #BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
+# C.perc = list(high = 7, med = 5 ) 
+# myunbalanced <- RandOverClassif(Risk~., balanced, C.perc)
+# table(myunbalanced$Risk)
+# 
+# #BALANCED INVERTED OVERSAMPLE
+# myinverted <- RandOverClassif(Risk~., data, "extreme")
+# table(myinverted$Risk)
 
 # 5 class oversampling
-
-
-#BALANCED OVERSAMPLE with weight for each weak classifier
-C.perc = list('1' = 17, '2' = 33, '3'= 21,'4'=124 ) 
-mybalanced_class <- RandOverClassif(CancerRisk~., balanced, C.perc)
-table(mybalanced_class$CancerRisk)
-
-#BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
-C.perc = list('1' = 9, '2' = 20, '3'= 10,'4'=100 )
-myunbalanced_class <- RandOverClassif(CancerRisk~., balanced, C.perc)
-table(myunbalanced_class$CancerRisk)
-
-#BALANCED INVERTED OVERSAMPLE
-myinverted_class <- RandOverClassif(CancerRisk~., data, "extreme")
-table(myinverted_class$CancerRisk)
+# 
+# 
+# #BALANCED OVERSAMPLE with weight for each weak classifier
+# C.perc = list('1' = 17, '2' = 33, '3'= 21,'4'=124 ) 
+# mybalanced_class <- RandOverClassif(CancerRisk~., balanced, C.perc)
+# table(mybalanced_class$CancerRisk)
+# 
+# #BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
+# C.perc = list('1' = 9, '2' = 20, '3'= 10,'4'=100 )
+# myunbalanced_class <- RandOverClassif(CancerRisk~., balanced, C.perc)
+# table(myunbalanced_class$CancerRisk)
+# 
+# #BALANCED INVERTED OVERSAMPLE
+# myinverted_class <- RandOverClassif(CancerRisk~., data, "extreme")
+# table(myinverted_class$CancerRisk)
