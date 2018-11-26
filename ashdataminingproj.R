@@ -200,12 +200,12 @@ table(data$Risk)
 
 library(DMwR)
 data(data)
-balanced<- data
+unbalanced<- data
 # 3 class oversampling
 
 #BALANCED OVERSAMPLE with weight for each weak classifier
 C.perc = list(high = 19, med = 12 ) 
-mybalanced <- RandOverClassif(Risk~., balanced, C.perc)
+mybalanced <- RandOverClassif(Risk~., unbalanced, C.perc)
 table(mybalanced$Risk)
 # 
 # #BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
