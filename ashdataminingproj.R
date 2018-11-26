@@ -183,24 +183,26 @@ plot(normal_dist)
 
 
 
-data <- within(data, Risk[Risk == 0] <- "low")
-data <- within(data, Risk[Risk == 1] <- "med")
-data <- within(data, Risk[Risk == 2] <-  "high")
-count<- table(data$Risk)
+dat <- within(dat, Risk[Risk == 0] <- "low")
+dat <- within(dat, Risk[Risk == 1] <- "med")
+dat <- within(dat, Risk[Risk == 2] <-  "high")
+count<- table(dat$Risk)
+
+
+# library(UBL)
+# # Example with an imbalanced multi-class problem
+# data(data)
+# dat <- data[-c(45:75),]
+# # checking the class distribution of this artificial data set
+# table(data$Risk)
+# #newdata <- AdasynClassif(Risk~., data, beta=1)
+# 
+
 
 #Oversampling
-library(UBL)
-# Example with an imbalanced multi-class problem
-data(data)
-dat <- data[-c(45:75),]
-# checking the class distribution of this artificial data set
-table(data$Risk)
-#newdata <- AdasynClassif(Risk~., data, beta=1)
-
-
 library(DMwR)
-data(data)
-unbalanced<- data
+data(dat)
+unbalanced<- dat
 # 3 class oversampling
 
 #BALANCED OVERSAMPLE with weight for each weak classifier
@@ -233,3 +235,8 @@ table(mybalanced$Risk)
 # #BALANCED INVERTED OVERSAMPLE
 # myinverted_class <- RandOverClassif(CancerRisk~., data, "extreme")
 # table(myinverted_class$CancerRisk)
+
+
+###########################
+#
+###########################
