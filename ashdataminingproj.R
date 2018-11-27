@@ -222,10 +222,12 @@ table(mybalanced$Risk)
 # 5 class oversampling
 # 
 # 
+
+# balanced<-dat
 # #BALANCED OVERSAMPLE with weight for each weak classifier
-# C.perc = list('1' = 17, '2' = 33, '3'= 21,'4'=124 ) 
-# mybalanced_class <- RandOverClassif(CancerRisk~., balanced, C.perc)
-# table(mybalanced_class$CancerRisk)
+# C.perc = list('1' = 17, '2' = 33, '3'= 21,'4'=124 )
+# mybalanced_class_5 <- RandOverClassif(CancerRisk~., balanced, C.perc)
+# table(mybalanced_class_5$CancerRisk)
 # 
 # #BALANCED UNBALACED OVER SAMPLE weight for each weak classifier
 # C.perc = list('1' = 9, '2' = 20, '3'= 10,'4'=100 )
@@ -238,5 +240,68 @@ table(mybalanced$Risk)
 
 
 ###########################
-#
+# Random Forest
 ###########################
+
+
+set.seed(1234)
+
+#balanced
+mybalanced <- within(mybalanced, Risk[Risk == "low"] <- as.double(0) )
+mybalanced <- within(mybalanced, Risk[Risk == "med"] <- as.double(1))
+mybalanced <- within(mybalanced, Risk[Risk == "high"] <-  as.double(2))
+mybalanced$Risk<- as.numeric(mybalanced$Risk)
+count<- table(mybalanced$Risk)
+#percentage split
+train<- sample(1:nrow(mybalanced), .75*nrow(mybalanced))
+tr <- mybalanced[train,]
+te <- mybalanced[-train,]
+
+#Numerical response data
+risk_Tru_train <- as.numeric(tr$Risk)
+risk_Tru_test <- as.numeric(te$Risk)
+
+rf.fit<- randomForest(tr$Risk~. , data = tr, n.trees= 10000)
+quartz()
+varImpPlot(rf.fit)
+importance(rf.fit)
+
+y_hat<- predict(rf.fit, newdata= te, type= "class")
+y_hat<-round(y_hat)
+# y_hat<- as.numeric(y_hat)-1
+misclass_rf<- sum(abs(risk_Tru_test- y_hat))/length(y_hat)
+misclass_rf
+
+print("THIS OF FOR Over Sample Balanced")
+confusionMatrix(as.factor(y_hat), as.factor(risk_Tru_test))
+
+set.seed(1234)
+
+#unbalanced
+unbalanced <- within(unbalanced, Risk[Risk == "low"] <- as.double(0) )
+unbalanced <- within(unbalanced, Risk[Risk == "med"] <- as.double(1))
+unbalanced <- within(unbalanced, Risk[Risk == "high"] <-  as.double(2))
+unbalanced$Risk<- as.numeric(unbalanced$Risk)
+count1<- table(unbalanced$Risk)
+#percentage split
+trainun<- sample(1:nrow(unbalanced), .75*nrow(unbalanced))
+trun <- unbalanced[trainun,]
+teun <- unbalanced[-trainun,]
+
+#Numerical response data
+risk_Tru_train_un <- as.numeric(trun$Risk)
+risk_Tru_test_un <- as.numeric(teun$Risk)
+
+rf.fitun<- randomForest(Risk~. , data = trun)
+quartz()
+varImpPlot(rf.fitun)
+importance(rf.fitun)
+
+y_hatun<- predict(rf.fitun, newdata= teun, type= "class")
+y_hatun<-round(y_hatun)
+# y_hat<- as.numeric(y_hat)-1
+misclass_rfun<- sum(abs(risk_Tru_test_un- y_hatun))/length(y_hatun)
+misclass_rfun
+
+print("THIS OF FOR Over Sample Balanced")
+confusionMatrix(as.factor(y_hatun), as.factor(risk_Tru_test_un))
