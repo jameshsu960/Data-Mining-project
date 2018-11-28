@@ -1,11 +1,30 @@
 install.packages("matrixStats")
 install.packages("fitdistrplus")
 install.packages("nnet")
+install.packages("UBL")
+install.packages("DMwR")
+install.packages("knitr")
+
+install.packages("xgboost")
+install.packages("dplyr")
+install.packages("caret")
+install.packages("e1071")
+install.packages("Ckmeans.1d.dp")
 
 
 library(matrixStats)
 library(fitdistrplus)
 library(nnet)
+library(UBL)
+library(knitr)
+library(xgboost)
+library("dplyr") 
+library("caret")
+library("e1071")
+library("Ckmeans.1d.dp") 
+
+
+
 
 rm(list=ls())
 
@@ -28,7 +47,15 @@ MyData[MyData=="?"]<- NA
 
 ######## to  count NA values in each columns
 na_count <-sapply(MyData, function(y) sum(length(which(is.na(y)))))
+
 na_count <- data.frame(na_count)
+
+# barplot(na_count$na_count, names= (rownames(na_count))
+#         ,xlab = "Variable", ylab = "NA Count",
+#         main = "Total NA per column")
+
+
+
 
 
 ##### to check factor/categorical variables and continuous variables
@@ -135,7 +162,7 @@ data$Risk[data$CancerRisk >= 3 & data$CancerRisk<= 4] <- 2  ##### "high risk"
 #### removing the colums 
 dat <- data[ -c(33,34,35,36,37) ]
 #### to write updated data set to new csv
-write.csv(dat, "Updated_file.csv")
+#write.csv(dat, "Updated_file.csv")
 
 #### round is rounding the output of prop.table to 2 digits
 round(prop.table(table(dat$Risk)),2)
@@ -144,7 +171,7 @@ round(prop.table(table(dat$Risk)),2)
 
 
 
-hist(dat$Risk, col = 2)
+hist(dat$Risk, ylim = c(0,900),col = 2 , main="Cancer Risk Category", xlab="Category")
 
 ###########################################
 
@@ -155,38 +182,136 @@ descdist(dat$Risk, discrete = FALSE)
 normal_dist <- fitdist(dat$Risk, "norm")
 plot(normal_dist) 
 
-###Standardize the data
-# head(dat)
-# class(dat)
-# Standandardize_train <- scale(dat[,-33])
+
+
+
+#Oversampling
+library(DMwR)
+
+unbalanced<- dat
+
+set.seed(123)
+
+
+
+
+# Make split index
+train_index <- sample(1:nrow(unbalanced), nrow(unbalanced)*0.75)
+# Full data set
+data_variables <- as.matrix(unbalanced[,-33])
+data_label <- unbalanced[,"Risk"]
+data_matrix <- xgb.DMatrix(data = as.matrix(unbalanced), label = data_label)
+# split train data and make xgb.DMatrix
+train_data   <- data_variables[train_index,]
+train_label  <- data_label[train_index]
+train_matrix <- xgb.DMatrix(data = train_data, label = train_label)
+# split test data and make xgb.DMatrix
+test_data  <- data_variables[-train_index,]
+test_label <- data_label[-train_index]
+test_matrix <- xgb.DMatrix(data = test_data, label = test_label)
+
+
+numberOfClasses <- length(unique(unbalanced$Risk))
+
+xgb_params <- list("objective" = "multi:softprob",
+                   "eval_metric" = "mlogloss",
+                   "num_class" = numberOfClasses)
+nround    <- 200 # number of XGBoost rounds
+cv.nfold  <- 5
+
+
+
+#########Train Full Model and Assess Test Set Error
+bst_model <- xgb.train(params = xgb_params,
+                       data = train_matrix,
+                       nrounds = nround)
+
+# Predict hold-out test set
+test_pred <- predict(bst_model, newdata = test_matrix)
+test_prediction <- matrix(test_pred, nrow = numberOfClasses,
+                          ncol=length(test_pred)/numberOfClasses) %>%
+  t() %>%
+  data.frame() %>%
+  mutate(label = test_label + 1,
+         max_prob = max.col(., "last"))
+confusionMatrix(factor(test_prediction$max_prob),
+                factor(test_prediction$label),
+                mode = "everything")
+
+names <-  colnames(unbalanced[,-33])
+# compute feature importance matrix
+importance_matrix = xgb.importance(feature_names = names, model = bst_model)
+head(importance_matrix)
+
+x11()
+gp = xgb.ggplot.importance(importance_matrix)
+print(gp) 
+
+
+
+
+
+
+##############################
+########## Xg boost with balanced data
+#############################
+# 3 class oversampling
+
+
 # 
-# var(dat[,2])
-# var(dat[,3])
-# 
-# var(Standandardize_train[,2])
-# var(Standandardize_train[,3])
-# 
-# var(dat[,10])
-# var(Standandardize_train[,10])
-
-# train <- sample(1:nrow(dat), nrow(dat)*.80)
-# df_train <- dat[train, ]
-# df_test <- dat[-train, ]
-# 
-# msat <- multinom(CancerRisk ~ ., data=df_train)
+#BALANCED OVERSAMPLE with weight for each weak classifier package used UBL
 
 
+C.perc = list('2' = 19, '1' = 12 )
+mybalanced <- RandOverClassif(Risk~., unbalanced, C.perc)
+table(mybalanced$Risk)
+set.seed(131)
+train_index <- sample(1:nrow(mybalanced), nrow(mybalanced)*0.75)
+# Full data set
+data_variables <- as.matrix(mybalanced[,-33])
+data_label <- mybalanced[,"Risk"]
+data_matrix <- xgb.DMatrix(data = as.matrix(mybalanced), label = data_label)
+# split train data and make xgb.DMatrix
+train_data   <- data_variables[train_index,]
+train_label  <- data_label[train_index]
+train_matrix <- xgb.DMatrix(data = train_data, label = train_label)
+# split test data and make xgb.DMatrix
+test_data  <- data_variables[-train_index,]
+test_label <- data_label[-train_index]
+test_matrix <- xgb.DMatrix(data = test_data, label = test_label)
 
 
+numberOfClasses <- length(unique(mybalanced$Risk))
 
+xgb_params <- list("objective" = "multi:softprob",
+                   "eval_metric" = "mlogloss",
+                   "num_class" = numberOfClasses)
+nround    <- 50 # number of XGBoost rounds
 
+bst_model <- xgb.train(params = xgb_params,
+                       data = train_matrix,
+                       nrounds = nround)
 
+# Predict hold-out test set
+test_pred <- predict(bst_model, newdata = test_matrix)
+test_prediction <- matrix(test_pred, nrow = numberOfClasses,
+                          ncol=length(test_pred)/numberOfClasses) %>%
+  t() %>%
+  data.frame() %>%
+  mutate(label = test_label + 1,
+         max_prob = max.col(., "last"))
+confusionMatrix(factor(test_prediction$max_prob),
+                factor(test_prediction$label),
+                mode = "everything")
 
+names <-  colnames(unbalanced[,-33])
+# compute feature importance matrix
+importance_matrix = xgb.importance(feature_names = names, model = bst_model)
+head(importance_matrix)
 
-
-
-
-
+x11()
+gp = xgb.ggplot.importance(importance_matrix)
+print(gp) 
 
 
 
